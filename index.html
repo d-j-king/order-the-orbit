@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>nth-order attractor</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: #050508;
+  color: #b0b8d0;
+  font-family: 'SF Mono', 'Fira Mono', monospace;
+  font-size: 12px;
+  height: 100vh;
+  display: flex;
+  overflow: hidden;
+}
+
+#cv {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: block;
+  cursor: crosshair;
+}
+
+aside {
+  width: 270px;
+  flex-shrink: 0;
+  border-left: 1px solid #12121e;
+  background: #07070f;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.section {
+  padding: 14px 14px 12px;
+  border-bottom: 1px solid #10101c;
+}
+
+.sec-title {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #5858a0;
+  margin-bottom: 10px;
+}
+
+/* Order selector */
+.order-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+
+.ord-btn {
+  background: #0e0e1c;
+  border: 1px solid #1e1e30;
+  color: #6060a8;
+  padding: 10px 0;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  transition: all 0.15s;
+  line-height: 1;
+}
+.ord-btn:hover { background: #141428; }
+.ord-btn.active {
+  background: #0d1a2e;
+  border-color: var(--col);
+  color: var(--col);
+  box-shadow: 0 0 10px var(--col)44;
+}
+
+/* Insight */
+.insight {
+  margin: 8px 0 0;
+  background: #090914;
+  border: 1px solid #151528;
+  border-radius: 4px;
+  padding: 8px 10px;
+  font-size: 10px;
+  line-height: 1.6;
+  color: #6070a8;
+}
+.insight .eq  { color: #7080c0; font-size: 11px; display:block; margin: 3px 0 2px; }
+.insight .beh { color: #60a090; }
+
+/* Eigenvalue diagram */
+#eig-cv {
+  display: block;
+  width: 100%;
+  border-radius: 3px;
+}
+.eig-note {
+  font-size: 9px;
+  text-align: center;
+  color: #505080;
+  margin-top: 5px;
+  letter-spacing: 0.04em;
+}
+
+/* Sliders */
+.sl-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+.sl-row label { width: 72px; color: #6070b0; font-size: 10px; }
+.sl-row input[type=range] {
+  flex: 1;
+  height: 3px;
+  -webkit-appearance: none;
+  background: #151524;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+.sl-row input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px; height: 12px;
+  background: #4a6090;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.sl-row .val { width: 38px; text-align:right; color: #5060a0; font-size:10px; }
+
+/* Toggle / buttons */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  cursor: pointer;
+}
+.toggle-row label { color: #6070b0; font-size: 10px; cursor:pointer; flex:1; }
+.toggle {
+  width: 28px; height: 14px;
+  background: #141424;
+  border: 1px solid #202038;
+  border-radius: 7px;
+  position: relative;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.toggle::after {
+  content:'';
+  position:absolute;
+  width:10px; height:10px;
+  background: #303050;
+  border-radius: 50%;
+  top: 1px; left: 1px;
+  transition: transform 0.2s, background 0.2s;
+}
+.toggle.on { background: #0d1e30; border-color: #4a80b0; }
+.toggle.on::after { transform: translateX(14px); background: #4FC3F7; }
+
+.btn-row { display:flex; gap:6px; margin-top:4px; }
+.btn {
+  flex:1;
+  background: #0e0e1a;
+  border: 1px solid #1a1a2e;
+  color: #6878b0;
+  padding: 6px 0;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  transition: all 0.15s;
+}
+.btn:hover { background:#141428; color:#7080a0; }
+.btn.danger:hover { border-color:#8a3030; color:#c06050; }
+
+.hint {
+  padding: 10px 14px;
+  color: #505080;
+  font-size: 10px;
+  line-height: 1.7;
+  flex: 1;
+}
+.count { color: #7080b0; font-size: 11px; font-weight:bold; }
+</style>
+</head>
+<body>
+
+<canvas id="cv"></canvas>
+
+<aside>
+  <div class="section">
+    <div class="sec-title">which derivative ∝ −distance</div>
+    <div class="order-grid" id="ord-grid"></div>
+    <div class="insight" id="insight"></div>
+  </div>
+
+  <div class="section">
+    <div class="sec-title">eigenvalues of rⁿ = −k</div>
+    <canvas id="eig-cv" width="242" height="116"></canvas>
+    <div class="eig-note" id="eig-note"></div>
+  </div>
+
+  <div class="section">
+    <div class="sec-title">parameters</div>
+    <div class="sl-row">
+      <label>strength k</label>
+      <input type="range" id="sl-k" min="0.2" max="12" step="0.1" value="3">
+      <span class="val" id="val-k">3.0</span>
+    </div>
+    <div class="sl-row">
+      <label>trail len</label>
+      <input type="range" id="sl-trail" min="20" max="600" step="10" value="200">
+      <span class="val" id="val-trail">200</span>
+    </div>
+    <div class="sl-row">
+      <label>time scale</label>
+      <input type="range" id="sl-ts" min="0.05" max="3" step="0.05" value="1">
+      <span class="val" id="val-ts">1.0</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-title">controls</div>
+    <div class="toggle-row" id="tog-pause">
+      <div class="toggle" id="t-pause"></div>
+      <label>pause</label>
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="btn-add">+ add body</button>
+      <button class="btn danger" id="btn-clear">clear all</button>
+    </div>
+  </div>
+
+  <div class="hint">
+    <div class="count" id="body-count">0 bodies</div>
+    <br>
+    <b style="color:#4a4a70">drag</b> on canvas to place.<br>
+    Anchor = where you click.<br>
+    Drag length = displacement.<br><br>
+    Order 2 orbits forever.<br>
+    All others escape or decay.
+  </div>
+</aside>
+
+<script>
+// ─────────────────────────────────────────────────────
+//  CONFIG
+// ─────────────────────────────────────────────────────
+
+const ORDER_COLORS = ['#4FC3F7','#66BB6A','#FFA726','#EF5350','#AB47BC'];
+
+const ORDER_INFO = [
+  {
+    label: 'velocity ∝ −dist',
+    eq: 'ẋ = −k · x',
+    behavior: 'Flows directly to anchor. One real negative eigenvalue — pure exponential decay, no oscillation.',
+  },
+  {
+    label: 'acceleration ∝ −dist',
+    eq: 'ẍ = −k · x',
+    behavior: 'Simple harmonic motion. Both eigenvalues are purely imaginary — the only order that gives stable orbits forever.',
+  },
+  {
+    label: 'jerk ∝ −dist',
+    eq: 'x‴ = −k · x',
+    behavior: 'Two of three eigenvalues have positive real part. Orbit slowly spirals out and escapes.',
+  },
+  {
+    label: 'snap ∝ −dist',
+    eq: 'x⁽⁴⁾ = −k · x',
+    behavior: 'Two stable, two unstable eigenvalues. Oscillates briefly, then the growing modes take over.',
+  },
+  {
+    label: 'crackle ∝ −dist',
+    eq: 'x⁽⁵⁾ = −k · x',
+    behavior: 'Three stable, two unstable eigenvalues. The growing modes still win — diverges.',
+  },
+];
+
+// ─────────────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────────────
+
+const P = {
+  order:  2,
+  k:      3.0,
+  trail:  200,
+  ts:     1.0,
+  paused: false,
+};
+
+let bodies = [];
+let bodyIdSeq = 0;
+let drag = null;
+
+const STARS = Array.from({length:160}, () => ({
+  x: Math.random(), y: Math.random(),
+  r: Math.random() * 1.4 + 0.3,
+  a: Math.random() * 0.7 + 0.15,
+}));
+
+// ─────────────────────────────────────────────────────
+//  BODY
+// ─────────────────────────────────────────────────────
+
+function makeBody(ax, ay, initDx, initDy) {
+  const hue = (bodyIdSeq * 67 + 120) % 360;
+  const col = `hsl(${hue},70%,62%)`;
+  const n = P.order;
+  const sx = new Float64Array(n);
+  const sy = new Float64Array(n);
+  sx[0] = initDx;
+  sy[0] = initDy;
+  // Zero initial velocity — drag sets displacement, body released from rest.
+  // n=2: oscillates back and forth along the drag line (classic spring).
+  // n≥3: diverges from rest as unstable modes take over.
+  return { id: bodyIdSeq++, ax, ay, sx, sy, trail: [], col, order: n };
+}
+
+// ─────────────────────────────────────────────────────
+//  PHYSICS — nth-order ODE per axis, no damping
+//
+//  State  s = [x, ẋ, ẍ, ..., x^(n-1)]
+//  ṡᵢ = s_{i+1}       for i < n-1
+//  ṡ_{n-1} = −k · s₀
+// ─────────────────────────────────────────────────────
+
+function stateDerivs(s, n, k) {
+  const r = new Float64Array(n);
+  for (let i = 0; i < n-1; i++) r[i] = s[i+1];
+  r[n-1] = -k * s[0];
+  return r;
+}
+
+function rk4axis(s, n, k, dt) {
+  function add(a, b, sc) {
+    const r = new Float64Array(n);
+    for (let i = 0; i < n; i++) r[i] = a[i] + b[i] * sc;
+    return r;
+  }
+  const k1 = stateDerivs(s, n, k);
+  const k2 = stateDerivs(add(s, k1, dt/2), n, k);
+  const k3 = stateDerivs(add(s, k2, dt/2), n, k);
+  const k4 = stateDerivs(add(s, k3, dt),   n, k);
+  const out = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    out[i] = s[i] + dt/6 * (k1[i] + 2*k2[i] + 2*k3[i] + k4[i]);
+  }
+  return out;
+}
+
+function stepBodies(dt) {
+  const n = P.order;
+  const k = P.k;
+  let countChanged = false;
+
+  for (let i = bodies.length - 1; i >= 0; i--) {
+    const body = bodies[i];
+
+    // Resize state if order changed mid-flight
+    if (body.sx.length !== n) {
+      const oldSx = body.sx, oldSy = body.sy;
+      body.sx = new Float64Array(n);
+      body.sy = new Float64Array(n);
+      for (let j = 0; j < Math.min(n, oldSx.length); j++) {
+        body.sx[j] = oldSx[j];
+        body.sy[j] = oldSy[j];
+      }
+      body.order = n;
+    }
+
+    body.sx = rk4axis(body.sx, n, k, dt);
+    body.sy = rk4axis(body.sy, n, k, dt);
+
+    // Auto-remove bodies that have escaped
+    const dist = Math.hypot(body.sx[0], body.sy[0]);
+    if (!isFinite(dist) || dist > 5000) {
+      bodies.splice(i, 1);
+      countChanged = true;
+      continue;
+    }
+
+    const px = body.ax + body.sx[0];
+    const py = body.ay + body.sy[0];
+    body.trail.push([px, py]);
+    if (body.trail.length > P.trail) body.trail.shift();
+  }
+
+  if (countChanged) updateCount();
+}
+
+// ─────────────────────────────────────────────────────
+//  MAIN CANVAS
+// ─────────────────────────────────────────────────────
+
+const cv = document.getElementById('cv');
+const cx = cv.getContext('2d');
+const SIDEBAR_W = 270;
+
+function resize() {
+  cv.width  = window.innerWidth - SIDEBAR_W;
+  cv.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+function drawStars() {
+  const W = cv.width, H = cv.height;
+  for (const s of STARS) {
+    cx.globalAlpha = s.a;
+    cx.fillStyle = '#ffffff';
+    cx.beginPath();
+    cx.arc(s.x * W, s.y * H, s.r, 0, Math.PI*2);
+    cx.fill();
+  }
+  cx.globalAlpha = 1;
+}
+
+function drawSpring(x1, y1, x2, y2, col, alpha) {
+  const dx = x2-x1, dy = y2-y1;
+  const len = Math.hypot(dx, dy);
+  if (len < 2) return;
+  const ux = dx/len, uy = dy/len;
+  const nx = -uy, ny = ux;
+  const coils = Math.max(4, Math.floor(len / 12));
+  const segs = coils * 8;
+  cx.strokeStyle = col;
+  cx.globalAlpha = alpha;
+  cx.lineWidth = 1;
+  cx.beginPath();
+  cx.moveTo(x1, y1);
+  for (let i = 1; i <= segs; i++) {
+    const t = i / segs;
+    const along = t * len;
+    const wave = Math.sin(t * coils * Math.PI * 2) * 4;
+    cx.lineTo(x1 + ux*along + nx*wave, y1 + uy*along + ny*wave);
+  }
+  cx.lineTo(x2, y2);
+  cx.stroke();
+  cx.globalAlpha = 1;
+}
+
+function drawBody(body) {
+  const px = body.ax + body.sx[0];
+  const py = body.ay + body.sy[0];
+  const col = body.col;
+
+  // Trail
+  const trail = body.trail;
+  const tn = trail.length;
+  if (tn > 1) {
+    for (let i = 1; i < tn; i++) {
+      cx.strokeStyle = col;
+      cx.globalAlpha = (i / tn) * 0.9;
+      cx.lineWidth = 1.2;
+      cx.beginPath();
+      cx.moveTo(trail[i-1][0], trail[i-1][1]);
+      cx.lineTo(trail[i  ][0], trail[i  ][1]);
+      cx.stroke();
+    }
+    cx.globalAlpha = 1;
+  }
+
+  // Tether
+  drawSpring(body.ax, body.ay, px, py, col, 0.55);
+
+  // Anchor cross
+  cx.strokeStyle = col;
+  cx.globalAlpha = 0.3;
+  cx.lineWidth = 1;
+  cx.beginPath();
+  cx.moveTo(body.ax-7, body.ay); cx.lineTo(body.ax+7, body.ay);
+  cx.moveTo(body.ax, body.ay-7); cx.lineTo(body.ax, body.ay+7);
+  cx.stroke();
+  cx.globalAlpha = 1;
+
+  // Glowing particle
+  cx.shadowColor = col;
+  cx.shadowBlur = 28;
+  const grd = cx.createRadialGradient(px-2, py-2, 1, px, py, 14);
+  grd.addColorStop(0, '#ffffff');
+  grd.addColorStop(0.35, col);
+  grd.addColorStop(1, col + '00');
+  cx.fillStyle = grd;
+  cx.beginPath();
+  cx.arc(px, py, 14, 0, Math.PI*2);
+  cx.fill();
+  cx.shadowBlur = 0;
+}
+
+function drawDragPreview() {
+  if (!drag) return;
+  const { ax, ay, bx, by } = drag;
+  const col = ORDER_COLORS[P.order - 1];
+  cx.strokeStyle = col;
+  cx.globalAlpha = 0.85;
+  cx.lineWidth = 2;
+  cx.setLineDash([5, 5]);
+  cx.beginPath();
+  cx.moveTo(ax, ay); cx.lineTo(bx, by);
+  cx.stroke();
+  cx.setLineDash([]);
+  cx.lineWidth = 1;
+  cx.beginPath();
+  cx.moveTo(ax-8, ay); cx.lineTo(ax+8, ay);
+  cx.moveTo(ax, ay-8); cx.lineTo(ax, ay+8);
+  cx.stroke();
+  cx.fillStyle = '#ffffff';
+  cx.shadowColor = col;
+  cx.shadowBlur = 20;
+  cx.globalAlpha = 0.9;
+  cx.beginPath();
+  cx.arc(bx, by, 10, 0, Math.PI*2);
+  cx.fill();
+  cx.shadowBlur = 0;
+  cx.globalAlpha = 1;
+}
+
+function render() {
+  const W = cv.width, H = cv.height;
+  cx.fillStyle = '#050508';
+  cx.fillRect(0, 0, W, H);
+  drawStars();
+  for (const b of bodies) drawBody(b);
+  drawDragPreview();
+  cx.fillStyle = '#1a1a30';
+  cx.font = '9px monospace';
+  cx.fillText(`order ${P.order}  ·  k=${P.k.toFixed(1)}`, 10, H - 10);
+}
+
+// ─────────────────────────────────────────────────────
+//  EIGENVALUE DIAGRAM
+//
+//  Roots of rⁿ = −k lie on circle of radius k^(1/n).
+//  r_j = k^(1/n) · exp(i(π + 2πj)/n)  for j = 0..n-1
+//  Left of imaginary axis → stable (blue)
+//  On imaginary axis      → neutral (white)  — only n=2 with k>0
+//  Right of imaginary axis → unstable (red)
+// ─────────────────────────────────────────────────────
+
+const eigCv = document.getElementById('eig-cv');
+const eigCx = eigCv.getContext('2d');
+
+function drawEigenDiagram() {
+  const W = eigCv.width, H = eigCv.height;
+  const cX = W / 2, cY = H / 2;
+
+  eigCx.fillStyle = '#050508';
+  eigCx.fillRect(0, 0, W, H);
+
+  // Stable zone tint
+  eigCx.fillStyle = '#080c14';
+  eigCx.fillRect(0, 0, cX, H);
+
+  // Real axis
+  eigCx.strokeStyle = '#131326';
+  eigCx.lineWidth = 1;
+  eigCx.beginPath();
+  eigCx.moveTo(0, cY); eigCx.lineTo(W, cY);
+  eigCx.stroke();
+
+  // Imaginary axis (stability boundary)
+  eigCx.strokeStyle = '#22224a';
+  eigCx.lineWidth = 1.5;
+  eigCx.beginPath();
+  eigCx.moveTo(cX, 0); eigCx.lineTo(cX, H);
+  eigCx.stroke();
+
+  const n = P.order;
+  const k = P.k;
+  const R = Math.pow(k, 1 / n);
+  const margin = 20;
+  const scale = (Math.min(cX, cY) - margin) / R;
+
+  // Ghost circle roots lie on
+  eigCx.strokeStyle = '#101026';
+  eigCx.lineWidth = 0.5;
+  eigCx.beginPath();
+  eigCx.arc(cX, cY, R * scale, 0, Math.PI * 2);
+  eigCx.stroke();
+
+  // Zone labels
+  eigCx.font = '8px monospace';
+  eigCx.fillStyle = '#1e3050';
+  eigCx.textAlign = 'left';
+  eigCx.fillText('stable', 5, H - 5);
+  eigCx.fillStyle = '#502020';
+  eigCx.textAlign = 'right';
+  eigCx.fillText('unstable', W - 5, H - 5);
+
+  let stableCount = 0, neutralCount = 0, unstableCount = 0;
+
+  for (let j = 0; j < n; j++) {
+    const angle = (Math.PI + 2 * Math.PI * j) / n;
+    const re = R * Math.cos(angle);
+    const im = R * Math.sin(angle);
+    const px = cX + re * scale;
+    const py = cY - im * scale;
+
+    let col;
+    if      (re < -0.001) { col = '#4FC3F7'; stableCount++; }
+    else if (re >  0.001) { col = '#EF5350'; unstableCount++; }
+    else                   { col = '#dde8ff'; neutralCount++; }
+
+    eigCx.shadowColor = col;
+    eigCx.shadowBlur = 12;
+    eigCx.fillStyle = col;
+    eigCx.beginPath();
+    eigCx.arc(px, py, 4, 0, Math.PI * 2);
+    eigCx.fill();
+    eigCx.shadowBlur = 0;
+  }
+
+  // Summary note
+  let note;
+  if (n === 1) {
+    note = '1 stable root · decays to anchor';
+  } else if (neutralCount === n) {
+    note = 'all ' + n + ' roots on imaginary axis · orbits forever';
+  } else {
+    const parts = [];
+    if (stableCount  > 0) parts.push(stableCount  + ' stable');
+    if (neutralCount > 0) parts.push(neutralCount + ' neutral');
+    if (unstableCount > 0) parts.push(unstableCount + ' unstable');
+    note = parts.join(' · ') + ' · escapes';
+  }
+  document.getElementById('eig-note').textContent = note;
+}
+
+// ─────────────────────────────────────────────────────
+//  MAIN LOOP
+// ─────────────────────────────────────────────────────
+
+let lastTs = null;
+function loop(ts) {
+  const rawDt = lastTs ? (ts - lastTs) / 1000 : 1/60;
+  lastTs = ts;
+  const dt = Math.min(rawDt, 1/30) * P.ts;
+  try {
+    if (!P.paused) {
+      const substeps = 6;
+      for (let i = 0; i < substeps; i++) stepBodies(dt / substeps);
+    }
+    render();
+  } catch (err) {
+    console.error('loop error:', err);
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// ─────────────────────────────────────────────────────
+//  INTERACTION
+// ─────────────────────────────────────────────────────
+
+function cvPos(e) {
+  const r = cv.getBoundingClientRect();
+  const src = e.touches ? e.touches[0] : e;
+  return [src.clientX - r.left, src.clientY - r.top];
+}
+
+cv.addEventListener('mousedown', e => {
+  const [x, y] = cvPos(e);
+  drag = { ax: x, ay: y, bx: x, by: y };
+});
+cv.addEventListener('mousemove', e => {
+  if (!drag) return;
+  const [x, y] = cvPos(e);
+  drag.bx = x; drag.by = y;
+});
+window.addEventListener('mouseup', e => {
+  if (!drag) return;
+  const dx = drag.bx - drag.ax;
+  const dy = drag.by - drag.ay;
+  if (Math.hypot(dx, dy) > 3) {
+    bodies.push(makeBody(drag.ax, drag.ay, dx, dy));
+    updateCount();
+  }
+  drag = null;
+});
+
+cv.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const [x, y] = cvPos(e);
+  drag = { ax: x, ay: y, bx: x, by: y };
+}, { passive: false });
+cv.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (!drag) return;
+  const [x, y] = cvPos(e);
+  drag.bx = x; drag.by = y;
+}, { passive: false });
+cv.addEventListener('touchend', e => {
+  e.preventDefault();
+  if (!drag) return;
+  const dx = drag.bx - drag.ax;
+  const dy = drag.by - drag.ay;
+  if (Math.hypot(dx, dy) > 3) {
+    bodies.push(makeBody(drag.ax, drag.ay, dx, dy));
+    updateCount();
+  }
+  drag = null;
+}, { passive: false });
+
+// ─────────────────────────────────────────────────────
+//  UI
+// ─────────────────────────────────────────────────────
+
+const ordGrid  = document.getElementById('ord-grid');
+const insightEl = document.getElementById('insight');
+
+for (let n = 1; n <= 5; n++) {
+  const btn = document.createElement('button');
+  btn.className = 'ord-btn';
+  btn.textContent = n;
+  btn.style.setProperty('--col', ORDER_COLORS[n-1]);
+  btn.dataset.n = n;
+  btn.addEventListener('click', () => setOrder(n));
+  ordGrid.appendChild(btn);
+}
+
+function setOrder(n) {
+  P.order = n;
+  ordGrid.querySelectorAll('.ord-btn').forEach(b => {
+    b.classList.toggle('active', +b.dataset.n === n);
+  });
+  const info = ORDER_INFO[n-1];
+  const col  = ORDER_COLORS[n-1];
+  insightEl.innerHTML = `
+    <b style="color:${col}">${info.label}</b>
+    <span class="eq">${info.eq}</span>
+    <span class="beh">${info.behavior}</span>
+  `;
+  drawEigenDiagram();
+}
+
+function bindSlider(id, valId, key, dec, onchange) {
+  const sl = document.getElementById(id);
+  const vl = document.getElementById(valId);
+  sl.addEventListener('input', () => {
+    P[key] = parseFloat(sl.value);
+    vl.textContent = P[key].toFixed(dec);
+    if (onchange) onchange();
+  });
+}
+
+bindSlider('sl-k',     'val-k',     'k',     1, () => drawEigenDiagram());
+bindSlider('sl-trail', 'val-trail', 'trail', 0);
+bindSlider('sl-ts',    'val-ts',    'ts',    1);
+
+function makeToggle(togId, btnId, key) {
+  const row = document.getElementById(togId);
+  const btn = document.getElementById(btnId);
+  row.addEventListener('click', () => {
+    P[key] = !P[key];
+    btn.classList.toggle('on', P[key]);
+  });
+}
+makeToggle('tog-pause', 't-pause', 'paused');
+
+function updateCount() {
+  document.getElementById('body-count').textContent =
+    `${bodies.length} bod${bodies.length === 1 ? 'y' : 'ies'}`;
+}
+
+document.getElementById('btn-add').addEventListener('click', () => {
+  const W = cv.width, H = cv.height;
+  const ax = W/2 + (Math.random()-0.5) * 100;
+  const ay = H/2 + (Math.random()-0.5) * 100;
+  const dist  = 60 + Math.random() * 40;
+  const angle = Math.random() * Math.PI * 2;
+  bodies.push(makeBody(ax, ay, Math.cos(angle)*dist, Math.sin(angle)*dist));
+  updateCount();
+});
+
+document.getElementById('btn-clear').addEventListener('click', () => {
+  bodies = [];
+  updateCount();
+});
+
+setOrder(2);
+</script>
+</body>
+</html>
