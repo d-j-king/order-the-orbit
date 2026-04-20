@@ -2,959 +2,407 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>order the orbit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Order the Orbit</title>
+
+<!-- KaTeX for proper math rendering -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
-  onload="renderMathInElement(document.body,{delimiters:[{left:'$',right:'$',display:false}],throwOnError:false})"></script>
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false})"></script>
+
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 
+:root {
+  --bg:     #05050a;
+  --bg2:    #0b0b16;
+  --border: #1e1e32;
+  --text:   #aab8d8;
+  --dim:    #6868a0;
+  --bright: #dce8f8;
+  --accent: #4FC3F7;
+  --green:  #66BB6A;
+}
+
 body {
-  background: #05050a;
-  color: #e2eaf0;
-  font-family: 'SF Mono', 'Fira Mono', monospace;
-  font-size: 12px;
-  height: 100vh;
-  display: flex;
-  overflow: hidden;
-}
-
-#cv {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  display: block;
-  cursor: crosshair;
-}
-
-aside {
-  width: 270px;
-  flex-shrink: 0;
-  border-left: 1px solid #28283e;
-  background: #08080f;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.75;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  overflow-x: hidden;
+  align-items: center;
+  padding: 40px 24px 80px;
 }
 
-.section {
-  padding: 14px 14px 12px;
-  border-bottom: 1px solid #20203a;
+.page {
+  width: 100%;
+  max-width: 680px;
 }
 
-.sec-title {
+/* KaTeX color harmonization */
+.katex { color: inherit; }
+.katex .mord, .katex .mbin, .katex .mrel, .katex .mop { color: inherit; }
+
+.tag {
+  font-family: 'SF Mono', 'Fira Mono', monospace;
   font-size: 9px;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: #c8d4f0;
-  margin-bottom: 10px;
+  letter-spacing: 0.22em;
+  color: var(--dim);
+  margin-bottom: 20px;
 }
 
-.mode-pill {
+h1 {
+  font-size: clamp(20px, 4vw, 28px);
+  font-weight: 400;
+  color: var(--bright);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.sub {
+  font-family: 'SF Mono', 'Fira Mono', monospace;
+  font-size: 11px;
+  color: var(--dim);
+  margin-bottom: 24px;
+}
+
+/* Preview canvas */
+.preview-wrap {
   display: flex;
-  background: #0e0e1e;
-  border: 1px solid #2a2a46;
-  border-radius: 5px;
-  padding: 2px;
-  gap: 2px;
-}
-.mpill-btn {
-  flex: 1;
-  background: transparent;
-  border: none;
-  color: #b8c6d8;
-  padding: 8px 4px;
-  border-radius: 3px;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 9.5px;
-  letter-spacing: 0.02em;
-  transition: all 0.15s;
-  line-height: 1.4;
-  text-align: center;
-}
-.mpill-btn:hover { color: #dce8f8; }
-.mpill-btn.active { background: #0d1a2e; color: #4FC3F7; }
-.mpill-sub { font-size: 8px; opacity: 0.7; display: block; }
-
-.order-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 4px;
+  justify-content: center;
+  margin-bottom: 20px;
 }
 
-.ord-btn {
-  background: #0e0e1c;
-  border: 1px solid #2e2e4a;
-  color: #c8d0f0;
-  padding: 10px 0;
-  border-radius: 4px;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 16px;
-  font-weight: bold;
-  text-align: center;
-  transition: all 0.15s;
-  line-height: 1;
-}
-.ord-btn:hover { background: #141432; color: #e2eaf0; }
-.ord-btn.active {
-  background: #0d1a2e;
-  border-color: var(--col);
-  color: var(--col);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--col) 30%, transparent);
-}
-
-.insight {
-  margin: 8px 0 0;
-  background: #0a0a18;
-  border: 1px solid #22223a;
-  border-radius: 4px;
-  padding: 8px 10px;
-  font-size: 10px;
-  line-height: 1.6;
-  color: #c8d4f0;
-}
-.insight .eq  { color: #c8dcff; font-size: 11px; display:block; margin: 5px 0 4px; }
-.insight .beh { color: #a0dcc8; }
-
-#eig-cv {
+#preview {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
   display: block;
-  width: 100%;
-  border-radius: 3px;
 }
-.eig-note {
+
+/* Prose */
+p {
+  color: var(--text);
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+p b {
+  color: var(--bright);
+  font-weight: 500;
+}
+
+/* Mode cards */
+.modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 28px 0 36px;
+}
+
+.mode-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 18px 18px 16px;
+}
+
+.mode-label {
+  font-family: 'SF Mono', 'Fira Mono', monospace;
   font-size: 9px;
-  text-align: center;
-  color: #b8c4e0;
-  margin-top: 5px;
-  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  margin-bottom: 14px;
 }
 
-.sl-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 7px;
+.mode-math {
+  margin-bottom: 12px;
+  font-size: 15px;
+  /* KaTeX display equation, left-aligned */
 }
-.sl-row label { width: 72px; color: #c8d0f0; font-size: 10px; }
-.sl-row input[type=range] {
-  flex: 1;
-  height: 3px;
-  -webkit-appearance: none;
-  background: #242440;
-  border-radius: 2px;
-  outline: none;
-  cursor: pointer;
-}
-.sl-row input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 13px; height: 13px;
-  background: #7090d0;
-  border-radius: 50%;
-  cursor: pointer;
-}
-.sl-row .val { width: 38px; text-align:right; color: #c8d0f0; font-size:10px; }
 
-.toggle-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-  cursor: pointer;
+.mode-math .katex-display {
+  text-align: left;
+  margin: 0;
 }
-.toggle-row label { color: #c8d0f0; font-size: 10px; cursor:pointer; flex:1; }
-.toggle {
-  width: 28px; height: 14px;
-  background: #1a1a30;
-  border: 1px solid #363660;
-  border-radius: 7px;
+
+.mode-desc {
+  font-size: 12.5px;
+  color: #8898b8;
+  line-height: 1.6;
+}
+
+/* Properties */
+.props {
+  border-top: 1px solid var(--border);
+  padding-top: 28px;
+  margin-bottom: 40px;
+}
+
+.props-label {
+  font-family: 'SF Mono', 'Fira Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--dim);
+  margin-bottom: 16px;
+}
+
+.prop-list {
+  list-style: none;
+}
+
+.prop-list li {
+  font-size: 13.5px;
+  color: var(--text);
+  padding: 8px 0;
+  border-bottom: 1px solid #14142a;
+  padding-left: 14px;
   position: relative;
-  flex-shrink: 0;
-  cursor: pointer;
-  transition: background 0.2s;
+  line-height: 1.65;
 }
-.toggle::after {
-  content:'';
-  position:absolute;
-  width:10px; height:10px;
-  background: #7070a8;
-  border-radius: 50%;
-  top: 1px; left: 1px;
-  transition: transform 0.2s, background 0.2s;
-}
-.toggle.on { background: #0d1e30; border-color: #4a80b0; }
-.toggle.on::after { transform: translateX(14px); background: #4FC3F7; }
 
-.btn-row { display:flex; gap:6px; margin-top:4px; }
-.btn {
-  flex:1;
-  background: #101020;
-  border: 1px solid #2e2e50;
-  color: #c0d0f0;
-  padding: 6px 0;
-  border-radius: 3px;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 10px;
-  letter-spacing: 0.04em;
+.prop-list li::before {
+  content: '·';
+  position: absolute;
+  left: 0;
+  color: var(--dim);
+}
+
+.prop-list b {
+  color: var(--bright);
+  font-weight: 500;
+}
+
+/* Launch button */
+.launch-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 40px;
+}
+
+.launch {
+  display: inline-block;
+  background: #0a1520;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: 14px 42px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-family: 'SF Mono', 'Fira Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
   transition: all 0.15s;
+  box-shadow: 0 0 24px #4FC3F710;
 }
-.btn:hover { background:#181838; color:#e2eaf0; }
-.btn.danger:hover { border-color:#8a3030; color:#f08070; }
 
-.hint {
-  padding: 10px 14px;
-  color: #b8c6d8;
-  font-size: 10px;
-  line-height: 1.7;
-  flex: 1;
+.launch:hover {
+  background: #0d1e30;
+  box-shadow: 0 0 36px #4FC3F728;
 }
-.count { color: #e2eaf0; font-size: 11px; font-weight:bold; }
+
+/* Footer */
+footer {
+  font-size: 11px;
+  color: var(--dim);
+  text-align: center;
+  line-height: 2;
+}
+
+footer a {
+  color: #505080;
+  text-decoration: none;
+  border-bottom: 1px solid #252535;
+  transition: color 0.1s;
+}
+
+footer a:hover { color: var(--text); }
+
+@media (max-width: 520px) {
+  .modes { grid-template-columns: 1fr; }
+  body { padding: 40px 18px 60px; }
+}
 </style>
 </head>
 <body>
 
-<canvas id="cv"></canvas>
+<div class="page">
 
-<aside>
-  <div class="section">
-    <div class="sec-title">mode</div>
-    <div class="mode-pill">
-      <button class="mpill-btn active" data-mode="derivative">
-        nth derivative
-        <span class="mpill-sub">$d^n x/dt^n = {-}kx$</span>
-      </button>
-      <button class="mpill-btn" data-mode="powerlaw">
-        power law
-        <span class="mpill-sub">$F = {-}kx|x/R|^{n-1}$</span>
-      </button>
+  <div class="tag">interactive · exploratory · javascript</div>
+
+  <h1>Order the Orbit</h1>
+  <div class="sub">a sim for poking at dⁿx/dtⁿ = −kx</div>
+
+  <div class="preview-wrap">
+    <canvas id="preview" width="320" height="220"></canvas>
+  </div>
+
+  <div class="launch-wrap">
+    <a href="demo.html" class="launch">open demo →</a>
+  </div>
+
+  <p>
+    The usual mass-on-a-spring ties <b>acceleration</b> to displacement: \(\ddot{x} = -kx\).
+    What if you use a higher derivative instead — jerk, snap, crackle?
+    The eigenvalue picture changes completely, and only one order gives stable orbits.
+  </p>
+
+  <p>
+    There's also a second mode: keep it second-order but let the restoring force grow
+    nonlinearly with displacement. A nonlinear spring whose period depends on amplitude
+    — so orbits precess into rosettes.
+  </p>
+
+  <div class="modes">
+    <div class="mode-card">
+      <div class="mode-label" style="color:var(--accent)">Derivative tower</div>
+      <div class="mode-math">\[ \frac{d^n x}{dt^n} = -k\,x \]</div>
+      <div class="mode-desc">n = order of the derivative tied to displacement. n = 2 is the only stable case.</div>
+    </div>
+    <div class="mode-card">
+      <div class="mode-label" style="color:var(--green)">Power law spring</div>
+      <div class="mode-math">\[ F = -k\,x\left|\frac{x}{R}\right|^{n-1} \]</div>
+      <div class="mode-desc">Second-order, nonlinear. n = 1 is normal SHM; n &gt; 1 gives amplitude-dependent precession.</div>
     </div>
   </div>
 
-  <div class="section">
-    <div class="sec-title" id="ord-title">which derivative ∝ −distance</div>
-    <div class="order-grid" id="ord-grid"></div>
-    <div class="insight" id="insight"></div>
+  <div class="props">
+    <div class="props-label">things to notice</div>
+    <ul class="prop-list">
+      <li><b>n = 2 is the unique stable case</b> in the derivative tower. The eigenvalues of \(r^n = -k\) land on the imaginary axis only when n = 2; every other order has at least one root with positive real part.</li>
+      <li><b>Drag velocity sets the initial kick.</b> A slow release gives radial SHM. A fast flick at an angle launches an orbit. The arrow shown during drag is the velocity vector.</li>
+      <li><b>Power law n = 1</b> is physically identical to derivative n = 2 — same ODE, same eigenvalues, same orbits. The interesting regime starts at n = 2 where orbits begin to precess.</li>
+      <li><b>The sidebar diagram updates live</b> — eigenvalue positions or potential well shape — as you change n or k.</li>
+      <li>For n ≥ 3 in the derivative tower, bodies escape in finite time. Any eigenvalue with \(\operatorname{Re}(\lambda) > 0\) causes exponential growth regardless of initial conditions.</li>
+    </ul>
   </div>
 
-  <div class="section">
-    <div class="sec-title" id="diag-title">eigenvalues of rⁿ = −k</div>
-    <canvas id="eig-cv" width="242" height="116"></canvas>
-    <div class="eig-note" id="eig-note"></div>
-  </div>
+  <footer>
+    ~350 lines of vanilla JS &nbsp;·&nbsp; RK4 integration &nbsp;·&nbsp; no libraries<br>
+    <a href="https://github.com/d-j-king/order-the-orbit" target="_blank">github.com/d-j-king/order-the-orbit</a>
+  </footer>
 
-  <div class="section">
-    <div class="sec-title">parameters</div>
-    <div class="sl-row">
-      <label>strength k</label>
-      <input type="range" id="sl-k" min="0.2" max="12" step="0.1" value="3">
-      <span class="val" id="val-k">3.0</span>
-    </div>
-    <div class="sl-row">
-      <label>spin</label>
-      <input type="range" id="sl-spin" min="0" max="1" step="0.05" value="0.5">
-      <span class="val" id="val-spin">0.50</span>
-    </div>
-    <div class="sl-row">
-      <label>trail</label>
-      <input type="range" id="sl-trail" min="0" max="500" step="5" value="40">
-      <span class="val" id="val-trail">40</span>
-    </div>
-    <div class="sl-row">
-      <label>time scale</label>
-      <input type="range" id="sl-ts" min="0.05" max="3" step="0.05" value="1">
-      <span class="val" id="val-ts">1.0</span>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="sec-title">controls</div>
-    <div class="toggle-row" id="tog-pause">
-      <div class="toggle" id="t-pause"></div>
-      <label>pause</label>
-    </div>
-    <div class="btn-row">
-      <button class="btn" id="btn-add">+ add body</button>
-      <button class="btn danger" id="btn-clear">clear all</button>
-    </div>
-  </div>
-
-  <div class="hint">
-    <div class="count" id="body-count">0 bodies</div>
-    <br>
-    <b style="color:#8090b8">drag</b> to place.<br>
-    Anchor = click point.<br>
-    Drag = displacement.<br>
-    Release velocity → kick.<br><br>
-    spin controls <i>+ add body</i>.<br>
-    <span style="color:#7080a0;font-size:9px">spin 0 = radial · spin 1 = orbit</span>
-  </div>
-</aside>
+</div>
 
 <script>
-// ─────────────────────────────────────────────────────
-//  CONFIG
-// ─────────────────────────────────────────────────────
+// Animated preview: power-law n=3 rosette
+(function () {
+  const cv = document.getElementById('preview');
+  const cx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  const CX = W / 2, CY = H / 2;
+  const k = 3, n = 3, R = 100;
 
-const ORDER_COLORS = ['#4FC3F7','#66BB6A','#FFA726','#EF5350','#AB47BC'];
-const POWER_REF = 100; // reference displacement (px) for power-law normalization
+  let sx = new Float64Array([72, 0]);
+  let sy = new Float64Array([0, Math.sqrt(k) * 72 * 0.72]);
 
-const ORDER_INFO = [
-  { label: 'velocity ∝ −dist',     eq: '$\\dot{x} = -k\\,x$',      behavior: 'Flows directly to anchor. One real negative eigenvalue — pure exponential decay, no oscillation.' },
-  { label: 'acceleration ∝ −dist', eq: '$\\ddot{x} = -k\\,x$',     behavior: 'Simple harmonic motion. Both eigenvalues purely imaginary — the only order that gives stable orbits forever.' },
-  { label: 'jerk ∝ −dist',         eq: '$x^{(3)} = -k\\,x$',       behavior: 'Two of three eigenvalues have positive real part. Orbit slowly spirals out and escapes.' },
-  { label: 'snap ∝ −dist',         eq: '$x^{(4)} = -k\\,x$',       behavior: 'Two stable, two unstable eigenvalues. Oscillates briefly, then growing modes take over.' },
-  { label: 'crackle ∝ −dist',      eq: '$x^{(5)} = -k\\,x$',       behavior: 'Three stable, two unstable eigenvalues. The growing modes still win — diverges.' },
-];
+  const trail = [];
+  const TRAIL_MAX = 500;
+  const col = 'hsl(200,85%,65%)';
 
-const POWER_INFO = [
-  { label: 'linear spring',    eq: '$F = -k\\,x$',                           behavior: 'Standard SHM. Identical physics to derivative n=2. Period is amplitude-independent — orbits close perfectly.' },
-  { label: 'quadratic force',  eq: '$F = -kx\\,|x/R|$',                      behavior: 'Hardening spring. Larger amplitudes oscillate faster. Elliptic orbits slowly precess — rosette patterns.' },
-  { label: 'cubic force',      eq: '$F = -kx\\,|x/R|^2$',                    behavior: 'Strong hardening. Precession is fast and vivid. Orbits trace clear rosettes with visible petal structure.' },
-  { label: 'quartic force',    eq: '$F = -kx\\,|x/R|^3$',                    behavior: 'Very stiff at large displacement. Rapid precession. Trajectories resemble spinning polygons.' },
-  { label: 'quintic force',    eq: '$F = -kx\\,|x/R|^4$',                    behavior: 'Near box-well behavior. Constant speed along path, sharp corners near max. Extreme precession.' },
-];
-
-// ─────────────────────────────────────────────────────
-//  STATE
-// ─────────────────────────────────────────────────────
-
-const P = {
-  mode:   'derivative',
-  order:  2,
-  k:      3.0,
-  spin:   0.5,
-  trail:  40,
-  ts:     1.0,
-  paused: false,
-};
-
-let bodies = [];
-let bodyIdSeq = 0;
-let drag = null; // { ax, ay, bx, by, history:[{x,y,t}] }
-
-// ─────────────────────────────────────────────────────
-//  BODY
-// ─────────────────────────────────────────────────────
-
-function makeBody(ax, ay, initDx, initDy, velX, velY) {
-  const hue = (bodyIdSeq * 137) % 360;
-  const col = `hsl(${hue}, 100%, 65%)`;
-
-  const n = (P.mode === 'derivative') ? P.order : 2;
-  const sx = new Float64Array(n);
-  const sy = new Float64Array(n);
-  sx[0] = initDx;
-  sy[0] = initDy;
-
-  if (n >= 2 && P.k > 0) {
-    if (velX !== undefined && velY !== undefined) {
-      sx[1] = velX;
-      sy[1] = velY;
-    } else {
-      const omega = Math.sqrt(P.k);
-      sx[1] = -omega * initDy * P.spin;
-      sy[1] =  omega * initDx * P.spin;
-    }
+  function derivPow(s) {
+    const ax = Math.abs(s[0]);
+    return [s[1], ax < 1e-10 ? 0 : -k * s[0] * Math.pow(ax / R, n - 1)];
   }
 
-  return { id: bodyIdSeq++, ax, ay, sx, sy, trail: [], col, hue };
-}
-
-// ─────────────────────────────────────────────────────
-//  PHYSICS
-// ─────────────────────────────────────────────────────
-
-// Mode A: nth-order linear ODE  s = [x, ẋ, ..., x^(n-1)]
-function stateDerivs(s, n, k) {
-  const r = new Float64Array(n);
-  for (let i = 0; i < n - 1; i++) r[i] = s[i + 1];
-  r[n - 1] = -k * s[0];
-  return r;
-}
-
-function rk4axis(s, n, k, dt) {
-  function add(a, b, sc) {
-    const r = new Float64Array(n);
-    for (let i = 0; i < n; i++) r[i] = a[i] + b[i] * sc;
-    return r;
-  }
-  const k1 = stateDerivs(s, n, k);
-  const k2 = stateDerivs(add(s, k1, dt / 2), n, k);
-  const k3 = stateDerivs(add(s, k2, dt / 2), n, k);
-  const k4 = stateDerivs(add(s, k3, dt),     n, k);
-  const out = new Float64Array(n);
-  for (let i = 0; i < n; i++) {
-    out[i] = s[i] + dt / 6 * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]);
-  }
-  return out;
-}
-
-// Mode B: power-law spring, state = [x, ẋ]
-// F = -k * x * (|x|/R)^(n-1)  →  at |x|=R, |F|=k*R for all n
-function stateDerivsPow(s, n, k) {
-  const r = new Float64Array(2);
-  r[0] = s[1];
-  const ax = Math.abs(s[0]);
-  r[1] = ax < 1e-10 ? 0 : -k * s[0] * Math.pow(ax / POWER_REF, n - 1);
-  return r;
-}
-
-function rk4pow(s, n, k, dt) {
-  function add2(a, b, sc) {
-    return new Float64Array([a[0] + b[0] * sc, a[1] + b[1] * sc]);
-  }
-  const k1 = stateDerivsPow(s, n, k);
-  const k2 = stateDerivsPow(add2(s, k1, dt / 2), n, k);
-  const k3 = stateDerivsPow(add2(s, k2, dt / 2), n, k);
-  const k4 = stateDerivsPow(add2(s, k3, dt),     n, k);
-  return new Float64Array([
-    s[0] + dt / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]),
-    s[1] + dt / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]),
-  ]);
-}
-
-function stepBodies(dt) {
-  const isPow = P.mode === 'powerlaw';
-  const n = isPow ? 2 : P.order;
-  const k = P.k;
-  let countChanged = false;
-
-  for (let i = bodies.length - 1; i >= 0; i--) {
-    const body = bodies[i];
-
-    if (body.sx.length !== n) {
-      const ox = body.sx, oy = body.sy;
-      body.sx = new Float64Array(n);
-      body.sy = new Float64Array(n);
-      for (let j = 0; j < Math.min(n, ox.length); j++) {
-        body.sx[j] = ox[j];
-        body.sy[j] = oy[j];
-      }
-    }
-
-    if (isPow) {
-      body.sx = rk4pow(body.sx, P.order, k, dt);
-      body.sy = rk4pow(body.sy, P.order, k, dt);
-    } else {
-      body.sx = rk4axis(body.sx, n, k, dt);
-      body.sy = rk4axis(body.sy, n, k, dt);
-    }
-
-    const dist = Math.hypot(body.sx[0], body.sy[0]);
-    if (!isFinite(dist) || dist > 5000) {
-      bodies.splice(i, 1);
-      countChanged = true;
-      continue;
-    }
-
-    if (P.trail > 0) {
-      const px = body.ax + body.sx[0];
-      const py = body.ay + body.sy[0];
-      body.trail.push([px, py]);
-      if (body.trail.length > P.trail) body.trail.shift();
-    } else {
-      body.trail.length = 0;
-    }
+  function rk4step(s, dt) {
+    function add2(a, b, sc) { return [a[0] + b[0]*sc, a[1] + b[1]*sc]; }
+    const k1 = derivPow(s);
+    const k2 = derivPow(add2(s, k1, dt/2));
+    const k3 = derivPow(add2(s, k2, dt/2));
+    const k4 = derivPow(add2(s, k3, dt));
+    return new Float64Array([
+      s[0] + dt/6*(k1[0]+2*k2[0]+2*k3[0]+k4[0]),
+      s[1] + dt/6*(k1[1]+2*k2[1]+2*k3[1]+k4[1]),
+    ]);
   }
 
-  if (countChanged) updateCount();
-}
+  let lastT = null, totalT = 0;
 
-// ─────────────────────────────────────────────────────
-//  RENDERING
-// ─────────────────────────────────────────────────────
+  function frame(t) {
+    const rawDt = lastT ? (t - lastT)/1000 : 1/60;
+    lastT = t;
+    const dt = Math.min(rawDt, 1/30);
+    totalT += dt;
 
-const cv = document.getElementById('cv');
-const cx = cv.getContext('2d');
-const SIDEBAR_W = 270;
-
-function resize() {
-  cv.width  = window.innerWidth - SIDEBAR_W;
-  cv.height = window.innerHeight;
-}
-window.addEventListener('resize', resize);
-resize();
-
-function drawBody(body) {
-  const px = body.ax + body.sx[0];
-  const py = body.ay + body.sy[0];
-  const col = body.col;
-  const h = body.hue;
-
-  if (body.trail.length > 1) {
-    const trail = body.trail;
-    const tn = trail.length;
-    cx.lineCap = 'round';
-    for (let i = 1; i < tn; i++) {
-      const t = i / tn;          // 0 = oldest, 1 = newest (near ball)
-      cx.globalAlpha = Math.pow(t, 1.5) * 0.8;
-      cx.strokeStyle = col;
-      cx.lineWidth = 4 + t * 10; // fat throughout, only pinches at the very tail
-      cx.beginPath();
-      cx.moveTo(trail[i - 1][0], trail[i - 1][1]);
-      cx.lineTo(trail[i][0],     trail[i][1]);
-      cx.stroke();
+    for (let i = 0; i < 4; i++) {
+      sx = rk4step(sx, dt/4);
+      sy = rk4step(sy, dt/4);
     }
-    cx.globalAlpha = 1;
-    cx.lineCap = 'butt';
-  }
 
-  // Anchor reticle
-  cx.shadowColor = col;
-  cx.shadowBlur = 10;
-  cx.strokeStyle = col;
-  cx.globalAlpha = 0.75;
-  cx.lineWidth = 1.2;
-  cx.beginPath();
-  cx.arc(body.ax, body.ay, 5, 0, Math.PI * 2);
-  cx.stroke();
-  cx.beginPath();
-  cx.moveTo(body.ax - 10, body.ay); cx.lineTo(body.ax - 6, body.ay);
-  cx.moveTo(body.ax + 6,  body.ay); cx.lineTo(body.ax + 10, body.ay);
-  cx.moveTo(body.ax, body.ay - 10); cx.lineTo(body.ax, body.ay - 6);
-  cx.moveTo(body.ax, body.ay + 6);  cx.lineTo(body.ax, body.ay + 10);
-  cx.stroke();
-  cx.globalAlpha = 1;
-  cx.shadowBlur = 0;
+    const px = CX + sx[0], py = CY + sy[0];
+    trail.push([px, py]);
+    if (trail.length > TRAIL_MAX) trail.shift();
 
-  // Flat circle: outer ring + filled inner + white center dot
-  cx.shadowBlur = 0;
-  // Outer filled circle
-  cx.fillStyle = `hsla(${h},90%,55%,1)`;
-  cx.beginPath(); cx.arc(px, py, 7, 0, Math.PI*2); cx.fill();
-  // Bright inner ring cutout feel
-  cx.fillStyle = `hsla(${h},100%,72%,1)`;
-  cx.beginPath(); cx.arc(px, py, 4, 0, Math.PI*2); cx.fill();
-  // White center dot
-  cx.fillStyle = '#ffffff';
-  cx.beginPath(); cx.arc(px, py, 1.5, 0, Math.PI*2); cx.fill();
-}
+    if (totalT > 12) {
+      totalT = 0;
+      const r0 = 55 + Math.random()*30;
+      const a0 = Math.random()*Math.PI*2;
+      sx = new Float64Array([r0*Math.cos(a0), -Math.sqrt(k)*r0*Math.sin(a0)*0.7]);
+      sy = new Float64Array([r0*Math.sin(a0),  Math.sqrt(k)*r0*Math.cos(a0)*0.7]);
+      trail.length = 0;
+    }
 
-function getDragVel() {
-  if (!drag || drag.history.length < 2) return [0, 0];
-  const h = drag.history;
-  const h0 = h[0], h1 = h[h.length - 1];
-  const dt = (h1.t - h0.t) / 1000;
-  if (dt < 0.005) return [0, 0];
-  return [(h1.x - h0.x) / dt, (h1.y - h0.y) / dt];
-}
+    cx.fillStyle = '#05050a';
+    cx.fillRect(0, 0, W, H);
 
-function drawDragPreview() {
-  if (!drag) return;
-  const { ax, ay, bx, by } = drag;
-  const col = ORDER_COLORS[P.order - 1];
-
-  cx.strokeStyle = col;
-  cx.globalAlpha = 0.6;
-  cx.lineWidth = 1.5;
-  cx.setLineDash([5, 6]);
-  cx.beginPath();
-  cx.moveTo(ax, ay); cx.lineTo(bx, by);
-  cx.stroke();
-  cx.setLineDash([]);
-
-  cx.shadowColor = col;
-  cx.shadowBlur = 24;
-  cx.fillStyle = '#ffffff';
-  cx.globalAlpha = 0.85;
-  cx.beginPath();
-  cx.arc(bx, by, 4, 0, Math.PI * 2);
-  cx.fill();
-
-  cx.fillStyle = col;
-  cx.globalAlpha = 0.5;
-  cx.beginPath();
-  cx.arc(ax, ay, 3, 0, Math.PI * 2);
-  cx.fill();
-
-  // Velocity arrow
-  const [vx, vy] = getDragVel();
-  const vMag = Math.hypot(vx, vy);
-  if (vMag > 30) {
-    const arrowPx = Math.min(60, vMag * 0.06);
-    const scale = arrowPx / vMag;
-    const tipX = bx + vx * scale;
-    const tipY = by + vy * scale;
-    const angle = Math.atan2(vy, vx);
-
-    cx.shadowColor = col;
-    cx.shadowBlur = 8;
+    // Anchor reticle
     cx.strokeStyle = col;
-    cx.globalAlpha = 0.9;
-    cx.lineWidth = 2;
+    cx.globalAlpha = 0.3;
+    cx.lineWidth = 1;
+    cx.beginPath(); cx.arc(CX, CY, 4, 0, Math.PI*2); cx.stroke();
     cx.beginPath();
-    cx.moveTo(bx, by);
-    cx.lineTo(tipX, tipY);
+    cx.moveTo(CX-8,CY); cx.lineTo(CX-5,CY);
+    cx.moveTo(CX+5,CY); cx.lineTo(CX+8,CY);
+    cx.moveTo(CX,CY-8); cx.lineTo(CX,CY-5);
+    cx.moveTo(CX,CY+5); cx.lineTo(CX,CY+8);
     cx.stroke();
+    cx.globalAlpha = 1;
 
-    const hl = 7, ha = 0.45;
-    cx.beginPath();
-    cx.moveTo(tipX, tipY);
-    cx.lineTo(tipX - hl * Math.cos(angle - ha), tipY - hl * Math.sin(angle - ha));
-    cx.moveTo(tipX, tipY);
-    cx.lineTo(tipX - hl * Math.cos(angle + ha), tipY - hl * Math.sin(angle + ha));
-    cx.stroke();
-  }
-
-  cx.shadowBlur = 0;
-  cx.globalAlpha = 1;
-}
-
-function render() {
-  const W = cv.width, H = cv.height;
-  cx.fillStyle = '#05050a';
-  cx.fillRect(0, 0, W, H);
-  for (const b of bodies) drawBody(b);
-  drawDragPreview();
-  cx.fillStyle = '#5050a0';
-  cx.font = '9px monospace';
-  const modeStr = P.mode === 'derivative' ? `n=${P.order} deriv` : `power n=${P.order}`;
-  cx.fillText(`${modeStr}  ·  k=${P.k.toFixed(1)}  ·  spin=${P.spin.toFixed(2)}`, 10, H - 10);
-}
-
-// ─────────────────────────────────────────────────────
-//  DIAGRAMS
-// ─────────────────────────────────────────────────────
-
-const eigCv = document.getElementById('eig-cv');
-const eigCx = eigCv.getContext('2d');
-
-function drawEigenDiagram() {
-  const W = eigCv.width, H = eigCv.height;
-  const cX = W / 2, cY = H / 2;
-
-  eigCx.fillStyle = '#05050a';
-  eigCx.fillRect(0, 0, W, H);
-  eigCx.fillStyle = '#080c14';
-  eigCx.fillRect(0, 0, cX, H);
-
-  eigCx.strokeStyle = '#131326';
-  eigCx.lineWidth = 1;
-  eigCx.beginPath();
-  eigCx.moveTo(0, cY); eigCx.lineTo(W, cY);
-  eigCx.stroke();
-
-  eigCx.strokeStyle = '#22224a';
-  eigCx.lineWidth = 1.5;
-  eigCx.beginPath();
-  eigCx.moveTo(cX, 0); eigCx.lineTo(cX, H);
-  eigCx.stroke();
-
-  const n = P.order, k = P.k;
-  const R = Math.pow(k, 1 / n);
-  const margin = 20;
-  const scale = (Math.min(cX, cY) - margin) / R;
-
-  eigCx.strokeStyle = '#101026';
-  eigCx.lineWidth = 0.5;
-  eigCx.beginPath();
-  eigCx.arc(cX, cY, R * scale, 0, Math.PI * 2);
-  eigCx.stroke();
-
-  eigCx.font = '8px monospace';
-  eigCx.fillStyle = '#1e3050'; eigCx.textAlign = 'left';
-  eigCx.fillText('stable', 5, H - 5);
-  eigCx.fillStyle = '#502020'; eigCx.textAlign = 'right';
-  eigCx.fillText('unstable', W - 5, H - 5);
-
-  let sc = 0, nc = 0, uc = 0;
-  for (let j = 0; j < n; j++) {
-    const angle = (Math.PI + 2 * Math.PI * j) / n;
-    const re = R * Math.cos(angle);
-    const im = R * Math.sin(angle);
-    const px = cX + re * scale;
-    const py = cY - im * scale;
-
-    let col;
-    if      (re < -0.001) { col = '#4FC3F7'; sc++; }
-    else if (re >  0.001) { col = '#EF5350'; uc++; }
-    else                   { col = '#dde8ff'; nc++; }
-
-    eigCx.shadowColor = col;
-    eigCx.shadowBlur = 12;
-    eigCx.fillStyle = col;
-    eigCx.beginPath();
-    eigCx.arc(px, py, 4, 0, Math.PI * 2);
-    eigCx.fill();
-    eigCx.shadowBlur = 0;
-  }
-
-  let note;
-  if (n === 1) note = '1 stable root · decays to anchor';
-  else if (nc === n) note = 'all ' + n + ' roots on imaginary axis · orbits forever';
-  else {
-    const parts = [];
-    if (sc > 0) parts.push(sc + ' stable');
-    if (nc > 0) parts.push(nc + ' neutral');
-    if (uc > 0) parts.push(uc + ' unstable');
-    note = parts.join(' · ') + ' · escapes';
-  }
-  document.getElementById('eig-note').textContent = note;
-}
-
-function drawWellDiagram() {
-  const W = eigCv.width, H = eigCv.height;
-  const n = P.order;
-
-  eigCx.fillStyle = '#05050a';
-  eigCx.fillRect(0, 0, W, H);
-
-  const baseY = H - 14;
-  eigCx.strokeStyle = '#131326';
-  eigCx.lineWidth = 1;
-  eigCx.beginPath();
-  eigCx.moveTo(0, baseY); eigCx.lineTo(W, baseY);
-  eigCx.stroke();
-
-  eigCx.strokeStyle = '#22224a';
-  eigCx.lineWidth = 1.5;
-  eigCx.beginPath();
-  eigCx.moveTo(W / 2, 0); eigCx.lineTo(W / 2, baseY);
-  eigCx.stroke();
-
-  // V(x) = |x|^(n+1) / ((n+1) * R^(n-1))
-  const xPixMax = W / 2 - 2;
-  const xMax = POWER_REF * 1.4;
-  const evalV = x => Math.pow(Math.abs(x), n + 1) / ((n + 1) * Math.pow(POWER_REF, n - 1));
-  const vMax = evalV(xMax);
-  const plotH = baseY - 6;
-
-  const col = ORDER_COLORS[n - 1];
-
-  // Gradient fill
-  const grad = eigCx.createLinearGradient(0, 6, 0, baseY);
-  grad.addColorStop(0, col + '28');
-  grad.addColorStop(1, col + '06');
-  eigCx.fillStyle = grad;
-  eigCx.beginPath();
-  eigCx.moveTo(0, baseY);
-  for (let px = 0; px <= W; px++) {
-    const xPhys = ((px - W / 2) / xPixMax) * xMax;
-    const py = baseY - (evalV(xPhys) / vMax) * plotH;
-    eigCx.lineTo(px, py);
-  }
-  eigCx.lineTo(W, baseY);
-  eigCx.closePath();
-  eigCx.fill();
-
-  // Curve
-  eigCx.strokeStyle = col;
-  eigCx.lineWidth = 2;
-  eigCx.shadowColor = col;
-  eigCx.shadowBlur = 8;
-  eigCx.beginPath();
-  for (let px = 0; px <= W; px++) {
-    const xPhys = ((px - W / 2) / xPixMax) * xMax;
-    const py = baseY - (evalV(xPhys) / vMax) * plotH;
-    if (px === 0) eigCx.moveTo(px, py);
-    else eigCx.lineTo(px, py);
-  }
-  eigCx.stroke();
-  eigCx.shadowBlur = 0;
-
-  eigCx.font = '8px monospace';
-  eigCx.fillStyle = '#404070';
-  eigCx.textAlign = 'left';
-  eigCx.fillText('V(x)', 3, 11);
-
-  const sups = ['','¹','²','³','⁴','⁵','⁶'];
-  const shape = n === 1 ? 'parabola · isochronous'
-              : n === 2 ? 'cubic well · slow precession'
-              : n <= 4  ? 'stiff well · fast precession'
-              :            'box-like · extreme precession';
-  document.getElementById('eig-note').textContent = `V ∝ |x|${sups[n + 1]} · ${shape}`;
-}
-
-function drawDiagram() {
-  if (P.mode === 'derivative') drawEigenDiagram();
-  else drawWellDiagram();
-}
-
-// ─────────────────────────────────────────────────────
-//  MAIN LOOP
-// ─────────────────────────────────────────────────────
-
-let lastTs = null;
-function loop(ts) {
-  const rawDt = lastTs ? (ts - lastTs) / 1000 : 1 / 60;
-  lastTs = ts;
-  const dt = Math.min(rawDt, 1 / 30) * P.ts;
-  try {
-    if (!P.paused) {
-      const substeps = 6;
-      for (let i = 0; i < substeps; i++) stepBodies(dt / substeps);
+    // Trail
+    if (trail.length > 1) {
+      const tn = trail.length;
+      cx.lineCap = 'round';
+      for (let i = 1; i < tn; i++) {
+        const t2 = i/tn;
+        cx.globalAlpha = t2*t2*0.55;
+        cx.strokeStyle = col;
+        cx.lineWidth = 0.5 + t2*2;
+        cx.beginPath();
+        cx.moveTo(trail[i-1][0], trail[i-1][1]);
+        cx.lineTo(trail[i][0],   trail[i][1]);
+        cx.stroke();
+      }
+      cx.globalAlpha = 1;
+      cx.lineCap = 'butt';
     }
-    render();
-  } catch (err) {
-    console.error('loop error:', err);
+
+    // Ball
+    cx.shadowColor = col;
+    cx.shadowBlur = 12;
+    const aura = cx.createRadialGradient(px,py,0, px,py,9);
+    aura.addColorStop(0, 'hsla(200,85%,65%,0.8)');
+    aura.addColorStop(1, 'hsla(200,85%,65%,0)');
+    cx.fillStyle = aura;
+    cx.beginPath(); cx.arc(px,py,9,0,Math.PI*2); cx.fill();
+
+    cx.shadowColor = '#fff';
+    cx.shadowBlur = 8;
+    cx.fillStyle = '#fff';
+    cx.beginPath(); cx.arc(px,py,2.5,0,Math.PI*2); cx.fill();
+    cx.shadowBlur = 0;
+
+    requestAnimationFrame(frame);
   }
-  requestAnimationFrame(loop);
-}
-requestAnimationFrame(loop);
 
-// ─────────────────────────────────────────────────────
-//  INTERACTION
-// ─────────────────────────────────────────────────────
-
-function cvPos(e) {
-  const r = cv.getBoundingClientRect();
-  const src = e.touches ? e.touches[0] : e;
-  return [src.clientX - r.left, src.clientY - r.top];
-}
-
-cv.addEventListener('mousedown', e => {
-  const [x, y] = cvPos(e);
-  drag = { ax: x, ay: y, bx: x, by: y, history: [{ x, y, t: performance.now() }] };
-});
-
-cv.addEventListener('mousemove', e => {
-  if (!drag) return;
-  const [x, y] = cvPos(e);
-  drag.bx = x; drag.by = y;
-  drag.history.push({ x, y, t: performance.now() });
-  if (drag.history.length > 8) drag.history.shift();
-});
-
-window.addEventListener('mouseup', () => {
-  if (!drag) return;
-  const dx = drag.bx - drag.ax;
-  const dy = drag.by - drag.ay;
-  if (Math.hypot(dx, dy) > 3) {
-    const [vx, vy] = getDragVel();
-    bodies.push(makeBody(drag.ax, drag.ay, dx, dy, vx, vy));
-    updateCount();
-  }
-  drag = null;
-});
-
-cv.addEventListener('touchstart', e => {
-  e.preventDefault();
-  const [x, y] = cvPos(e);
-  drag = { ax: x, ay: y, bx: x, by: y, history: [{ x, y, t: performance.now() }] };
-}, { passive: false });
-
-cv.addEventListener('touchmove', e => {
-  e.preventDefault();
-  if (!drag) return;
-  const [x, y] = cvPos(e);
-  drag.bx = x; drag.by = y;
-  drag.history.push({ x, y, t: performance.now() });
-  if (drag.history.length > 8) drag.history.shift();
-}, { passive: false });
-
-cv.addEventListener('touchend', e => {
-  e.preventDefault();
-  if (!drag) return;
-  const dx = drag.bx - drag.ax;
-  const dy = drag.by - drag.ay;
-  if (Math.hypot(dx, dy) > 3) {
-    const [vx, vy] = getDragVel();
-    bodies.push(makeBody(drag.ax, drag.ay, dx, dy, vx, vy));
-    updateCount();
-  }
-  drag = null;
-}, { passive: false });
-
-// ─────────────────────────────────────────────────────
-//  UI
-// ─────────────────────────────────────────────────────
-
-const ordGrid   = document.getElementById('ord-grid');
-const insightEl = document.getElementById('insight');
-
-for (let n = 1; n <= 5; n++) {
-  const btn = document.createElement('button');
-  btn.className = 'ord-btn';
-  btn.textContent = n;
-  btn.style.setProperty('--col', ORDER_COLORS[n - 1]);
-  btn.dataset.n = n;
-  btn.addEventListener('click', () => setOrder(n));
-  ordGrid.appendChild(btn);
-}
-
-function setOrder(n) {
-  P.order = n;
-  ordGrid.querySelectorAll('.ord-btn').forEach(b => {
-    b.classList.toggle('active', +b.dataset.n === n);
-  });
-  const info = P.mode === 'derivative' ? ORDER_INFO[n - 1] : POWER_INFO[n - 1];
-  const col  = ORDER_COLORS[n - 1];
-  insightEl.innerHTML = `
-    <b style="color:${col}">${info.label}</b>
-    <span class="eq">${info.eq}</span>
-    <span class="beh">${info.behavior}</span>
-  `;
-  if (window.renderMathInElement) {
-    renderMathInElement(insightEl, { delimiters: [{ left: '$', right: '$', display: false }], throwOnError: false });
-  }
-  drawDiagram();
-}
-
-function setMode(mode) {
-  P.mode = mode;
-  document.querySelectorAll('.mpill-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.mode === mode);
-  });
-  const isD = mode === 'derivative';
-  document.getElementById('ord-title').textContent  = isD ? 'which derivative ∝ −distance' : 'force power: |x|ⁿ spring';
-  document.getElementById('diag-title').textContent = isD ? 'eigenvalues of rⁿ = −k'       : 'potential well shape';
-  setOrder(P.order);
-}
-
-document.querySelectorAll('.mpill-btn').forEach(btn => {
-  btn.addEventListener('click', () => setMode(btn.dataset.mode));
-});
-
-function bindSlider(id, valId, key, dec, onchange) {
-  const sl = document.getElementById(id);
-  const vl = document.getElementById(valId);
-  sl.addEventListener('input', () => {
-    P[key] = parseFloat(sl.value);
-    vl.textContent = P[key].toFixed(dec);
-    if (onchange) onchange();
-  });
-}
-
-bindSlider('sl-k',     'val-k',     'k',     1, () => drawDiagram());
-bindSlider('sl-spin',  'val-spin',  'spin',  2);
-bindSlider('sl-trail', 'val-trail', 'trail', 0);
-bindSlider('sl-ts',    'val-ts',    'ts',    1);
-
-function makeToggle(togId, btnId, key) {
-  const row = document.getElementById(togId);
-  const btn = document.getElementById(btnId);
-  row.addEventListener('click', () => {
-    P[key] = !P[key];
-    btn.classList.toggle('on', P[key]);
-  });
-}
-makeToggle('tog-pause', 't-pause', 'paused');
-
-function updateCount() {
-  document.getElementById('body-count').textContent =
-    `${bodies.length} bod${bodies.length === 1 ? 'y' : 'ies'}`;
-}
-
-document.getElementById('btn-add').addEventListener('click', () => {
-  const W = cv.width, H = cv.height;
-  const ax = W / 2 + (Math.random() - 0.5) * 100;
-  const ay = H / 2 + (Math.random() - 0.5) * 100;
-  const dist  = 60 + Math.random() * 40;
-  const angle = Math.random() * Math.PI * 2;
-  bodies.push(makeBody(ax, ay, Math.cos(angle) * dist, Math.sin(angle) * dist));
-  updateCount();
-});
-
-document.getElementById('btn-clear').addEventListener('click', () => {
-  bodies = [];
-  updateCount();
-});
-
-setOrder(2);
+  requestAnimationFrame(frame);
+})();
 </script>
 </body>
 </html>
