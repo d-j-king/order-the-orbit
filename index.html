@@ -2,13 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>nth-order attractor</title>
+<title>order the orbit</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$',right:'$',display:false}],throwOnError:false})"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 
 body {
   background: #05050a;
-  color: #d8e4f8;
+  color: #e2eaf0;
   font-family: 'SF Mono', 'Fira Mono', monospace;
   font-size: 12px;
   height: 100vh;
@@ -44,7 +48,7 @@ aside {
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  color: #a0a0d8;
+  color: #c8d4f0;
   margin-bottom: 10px;
 }
 
@@ -60,7 +64,7 @@ aside {
   flex: 1;
   background: transparent;
   border: none;
-  color: #9090c8;
+  color: #b8c6d8;
   padding: 8px 4px;
   border-radius: 3px;
   cursor: pointer;
@@ -71,7 +75,7 @@ aside {
   line-height: 1.4;
   text-align: center;
 }
-.mpill-btn:hover { color: #b8b8e8; }
+.mpill-btn:hover { color: #dce8f8; }
 .mpill-btn.active { background: #0d1a2e; color: #4FC3F7; }
 .mpill-sub { font-size: 8px; opacity: 0.7; display: block; }
 
@@ -84,7 +88,7 @@ aside {
 .ord-btn {
   background: #0e0e1c;
   border: 1px solid #2e2e4a;
-  color: #a8a8e0;
+  color: #c8d0f0;
   padding: 10px 0;
   border-radius: 4px;
   cursor: pointer;
@@ -95,7 +99,7 @@ aside {
   transition: all 0.15s;
   line-height: 1;
 }
-.ord-btn:hover { background: #141432; color: #c8c8f8; }
+.ord-btn:hover { background: #141432; color: #e2eaf0; }
 .ord-btn.active {
   background: #0d1a2e;
   border-color: var(--col);
@@ -111,10 +115,10 @@ aside {
   padding: 8px 10px;
   font-size: 10px;
   line-height: 1.6;
-  color: #b0b8e0;
+  color: #c8d4f0;
 }
-.insight .eq  { color: #a8c4f8; font-size: 11px; display:block; margin: 3px 0 2px; }
-.insight .beh { color: #80d8b8; }
+.insight .eq  { color: #c8dcff; font-size: 11px; display:block; margin: 5px 0 4px; }
+.insight .beh { color: #a0dcc8; }
 
 #eig-cv {
   display: block;
@@ -124,7 +128,7 @@ aside {
 .eig-note {
   font-size: 9px;
   text-align: center;
-  color: #9898cc;
+  color: #b8c4e0;
   margin-top: 5px;
   letter-spacing: 0.04em;
 }
@@ -135,7 +139,7 @@ aside {
   gap: 8px;
   margin-bottom: 7px;
 }
-.sl-row label { width: 72px; color: #b0b0d8; font-size: 10px; }
+.sl-row label { width: 72px; color: #c8d0f0; font-size: 10px; }
 .sl-row input[type=range] {
   flex: 1;
   height: 3px;
@@ -152,7 +156,7 @@ aside {
   border-radius: 50%;
   cursor: pointer;
 }
-.sl-row .val { width: 38px; text-align:right; color: #a0a8d8; font-size:10px; }
+.sl-row .val { width: 38px; text-align:right; color: #c8d0f0; font-size:10px; }
 
 .toggle-row {
   display: flex;
@@ -161,7 +165,7 @@ aside {
   margin-bottom: 6px;
   cursor: pointer;
 }
-.toggle-row label { color: #b0b0d8; font-size: 10px; cursor:pointer; flex:1; }
+.toggle-row label { color: #c8d0f0; font-size: 10px; cursor:pointer; flex:1; }
 .toggle {
   width: 28px; height: 14px;
   background: #1a1a30;
@@ -189,7 +193,7 @@ aside {
   flex:1;
   background: #101020;
   border: 1px solid #2e2e50;
-  color: #a0b0e0;
+  color: #c0d0f0;
   padding: 6px 0;
   border-radius: 3px;
   cursor: pointer;
@@ -198,17 +202,17 @@ aside {
   letter-spacing: 0.04em;
   transition: all 0.15s;
 }
-.btn:hover { background:#181838; color:#c0d0f8; }
-.btn.danger:hover { border-color:#8a3030; color:#e07060; }
+.btn:hover { background:#181838; color:#e2eaf0; }
+.btn.danger:hover { border-color:#8a3030; color:#f08070; }
 
 .hint {
   padding: 10px 14px;
-  color: #9898c8;
+  color: #b8c6d8;
   font-size: 10px;
   line-height: 1.7;
   flex: 1;
 }
-.count { color: #c0c8e8; font-size: 11px; font-weight:bold; }
+.count { color: #e2eaf0; font-size: 11px; font-weight:bold; }
 </style>
 </head>
 <body>
@@ -221,11 +225,11 @@ aside {
     <div class="mode-pill">
       <button class="mpill-btn active" data-mode="derivative">
         nth derivative
-        <span class="mpill-sub">∂ⁿx/∂tⁿ = −kx</span>
+        <span class="mpill-sub">$d^n x/dt^n = {-}kx$</span>
       </button>
       <button class="mpill-btn" data-mode="powerlaw">
         power law
-        <span class="mpill-sub">F = −kx|x/R|ⁿ⁻¹</span>
+        <span class="mpill-sub">$F = {-}kx|x/R|^{n-1}$</span>
       </button>
     </div>
   </div>
@@ -281,12 +285,12 @@ aside {
   <div class="hint">
     <div class="count" id="body-count">0 bodies</div>
     <br>
-    <b style="color:#4a4a70">drag</b> to place.<br>
+    <b style="color:#8090b8">drag</b> to place.<br>
     Anchor = click point.<br>
     Drag = displacement.<br>
     Release velocity → kick.<br><br>
     spin controls <i>+ add body</i>.<br>
-    <span style="color:#404060;font-size:9px">spin 0 = radial · spin 1 = orbit</span>
+    <span style="color:#7080a0;font-size:9px">spin 0 = radial · spin 1 = orbit</span>
   </div>
 </aside>
 
@@ -299,19 +303,19 @@ const ORDER_COLORS = ['#4FC3F7','#66BB6A','#FFA726','#EF5350','#AB47BC'];
 const POWER_REF = 100; // reference displacement (px) for power-law normalization
 
 const ORDER_INFO = [
-  { label: 'velocity ∝ −dist',     eq: 'ẋ = −k · x',    behavior: 'Flows directly to anchor. One real negative eigenvalue — pure exponential decay, no oscillation.' },
-  { label: 'acceleration ∝ −dist', eq: 'ẍ = −k · x',    behavior: 'Simple harmonic motion. Both eigenvalues purely imaginary — the only order that gives stable orbits forever.' },
-  { label: 'jerk ∝ −dist',         eq: 'x‴ = −k · x',   behavior: 'Two of three eigenvalues have positive real part. Orbit slowly spirals out and escapes.' },
-  { label: 'snap ∝ −dist',         eq: 'x⁽⁴⁾ = −k · x', behavior: 'Two stable, two unstable eigenvalues. Oscillates briefly, then growing modes take over.' },
-  { label: 'crackle ∝ −dist',      eq: 'x⁽⁵⁾ = −k · x', behavior: 'Three stable, two unstable eigenvalues. The growing modes still win — diverges.' },
+  { label: 'velocity ∝ −dist',     eq: '$\\dot{x} = -k\\,x$',      behavior: 'Flows directly to anchor. One real negative eigenvalue — pure exponential decay, no oscillation.' },
+  { label: 'acceleration ∝ −dist', eq: '$\\ddot{x} = -k\\,x$',     behavior: 'Simple harmonic motion. Both eigenvalues purely imaginary — the only order that gives stable orbits forever.' },
+  { label: 'jerk ∝ −dist',         eq: '$x^{(3)} = -k\\,x$',       behavior: 'Two of three eigenvalues have positive real part. Orbit slowly spirals out and escapes.' },
+  { label: 'snap ∝ −dist',         eq: '$x^{(4)} = -k\\,x$',       behavior: 'Two stable, two unstable eigenvalues. Oscillates briefly, then growing modes take over.' },
+  { label: 'crackle ∝ −dist',      eq: '$x^{(5)} = -k\\,x$',       behavior: 'Three stable, two unstable eigenvalues. The growing modes still win — diverges.' },
 ];
 
 const POWER_INFO = [
-  { label: 'linear spring',    eq: 'F = −k · x',             behavior: 'Standard SHM. Identical physics to derivative n=2. Period is amplitude-independent — orbits close perfectly.' },
-  { label: 'quadratic force',  eq: 'F = −kx · |x/R|',        behavior: 'Hardening spring. Larger amplitudes oscillate faster. Elliptic orbits slowly precess — rosette patterns.' },
-  { label: 'cubic force',      eq: 'F = −kx · |x/R|²',       behavior: 'Strong hardening. Precession is fast and vivid. Orbits trace clear rosettes with visible petal structure.' },
-  { label: 'quartic force',    eq: 'F = −kx · |x/R|³',       behavior: 'Very stiff at large displacement. Rapid precession. Trajectories resemble spinning polygons.' },
-  { label: 'quintic force',    eq: 'F = −kx · |x/R|⁴',       behavior: 'Near box-well behavior. Constant speed along path, sharp corners near max. Extreme precession.' },
+  { label: 'linear spring',    eq: '$F = -k\\,x$',                           behavior: 'Standard SHM. Identical physics to derivative n=2. Period is amplitude-independent — orbits close perfectly.' },
+  { label: 'quadratic force',  eq: '$F = -kx\\,|x/R|$',                      behavior: 'Hardening spring. Larger amplitudes oscillate faster. Elliptic orbits slowly precess — rosette patterns.' },
+  { label: 'cubic force',      eq: '$F = -kx\\,|x/R|^2$',                    behavior: 'Strong hardening. Precession is fast and vivid. Orbits trace clear rosettes with visible petal structure.' },
+  { label: 'quartic force',    eq: '$F = -kx\\,|x/R|^3$',                    behavior: 'Very stiff at large displacement. Rapid precession. Trajectories resemble spinning polygons.' },
+  { label: 'quintic force',    eq: '$F = -kx\\,|x/R|^4$',                    behavior: 'Near box-well behavior. Constant speed along path, sharp corners near max. Extreme precession.' },
 ];
 
 // ─────────────────────────────────────────────────────
@@ -884,6 +888,9 @@ function setOrder(n) {
     <span class="eq">${info.eq}</span>
     <span class="beh">${info.behavior}</span>
   `;
+  if (window.renderMathInElement) {
+    renderMathInElement(insightEl, { delimiters: [{ left: '$', right: '$', display: false }], throwOnError: false });
+  }
   drawDiagram();
 }
 
