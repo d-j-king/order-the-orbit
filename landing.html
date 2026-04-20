@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nth-order ODE attractor</title>
+
+<!-- KaTeX for proper math rendering -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false})"></script>
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg:     #05050a;
+  --bg2:    #0b0b16;
+  --border: #1e1e32;
+  --text:   #aab8d8;
+  --dim:    #6868a0;
+  --bright: #dce8f8;
+  --accent: #4FC3F7;
+  --green:  #66BB6A;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.75;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 64px 24px 80px;
+}
+
+.page {
+  width: 100%;
+  max-width: 680px;
+}
+
+/* KaTeX color harmonization */
+.katex { color: inherit; }
+.katex .mord, .katex .mbin, .katex .mrel, .katex .mop { color: inherit; }
+
+.tag {
+  font-family: 'SF Mono', 'Fira Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--dim);
+  margin-bottom: 20px;
+}
+
+h1 {
+  font-size: clamp(20px, 4vw, 28px);
+  font-weight: 400;
+  color: var(--bright);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.sub {
+  font-family: 'SF Mono', 'Fira Mono', monospace;
+  font-size: 11px;
+  color: var(--dim);
+  margin-bottom: 44px;
+}
+
+/* Preview canvas */
+.preview-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 48px;
+}
+
+#preview {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  display: block;
+}
+
+/* Prose */
+p {
+  color: var(--text);
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+p b {
+  color: var(--bright);
+  font-weight: 500;
+}
+
+/* Mode cards */
+.modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 28px 0 36px;
+}
+
+.mode-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 18px 18px 16px;
+}
+
+.mode-label {
+  font-family: 'SF Mono', 'Fira Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  margin-bottom: 14px;
+}
+
+.mode-math {
+  margin-bottom: 12px;
+  font-size: 15px;
+  /* KaTeX display equation, left-aligned */
+}
+
+.mode-math .katex-display {
+  text-align: left;
+  margin: 0;
+}
+
+.mode-desc {
+  font-size: 12.5px;
+  color: #8898b8;
+  line-height: 1.6;
+}
+
+/* Properties */
+.props {
+  border-top: 1px solid var(--border);
+  padding-top: 28px;
+  margin-bottom: 40px;
+}
+
+.props-label {
+  font-family: 'SF Mono', 'Fira Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--dim);
+  margin-bottom: 16px;
+}
+
+.prop-list {
+  list-style: none;
+}
+
+.prop-list li {
+  font-size: 13.5px;
+  color: var(--text);
+  padding: 8px 0;
+  border-bottom: 1px solid #14142a;
+  padding-left: 14px;
+  position: relative;
+  line-height: 1.65;
+}
+
+.prop-list li::before {
+  content: '·';
+  position: absolute;
+  left: 0;
+  color: var(--dim);
+}
+
+.prop-list b {
+  color: var(--bright);
+  font-weight: 500;
+}
+
+/* Launch button */
+.launch-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 52px;
+}
+
+.launch {
+  display: inline-block;
+  background: #0a1520;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: 14px 42px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-family: 'SF Mono', 'Fira Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  transition: all 0.15s;
+  box-shadow: 0 0 24px #4FC3F710;
+}
+
+.launch:hover {
+  background: #0d1e30;
+  box-shadow: 0 0 36px #4FC3F728;
+}
+
+/* Footer */
+footer {
+  font-size: 11px;
+  color: var(--dim);
+  text-align: center;
+  line-height: 2;
+}
+
+footer a {
+  color: #505080;
+  text-decoration: none;
+  border-bottom: 1px solid #252535;
+  transition: color 0.1s;
+}
+
+footer a:hover { color: var(--text); }
+
+@media (max-width: 520px) {
+  .modes { grid-template-columns: 1fr; }
+  body { padding: 40px 18px 60px; }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="tag">interactive · exploratory · javascript</div>
+
+  <h1>nth-order ODE attractor</h1>
+  <div class="sub">a sim for poking at dⁿx/dtⁿ = −kx</div>
+
+  <div class="preview-wrap">
+    <canvas id="preview" width="320" height="220"></canvas>
+  </div>
+
+  <p>
+    The usual mass-on-a-spring ties <b>acceleration</b> to displacement: \(\ddot{x} = -kx\).
+    What if you use a higher derivative instead — jerk, snap, crackle?
+    The eigenvalue picture changes completely, and only one order gives stable orbits.
+  </p>
+
+  <p>
+    There's also a second mode: keep it second-order but let the restoring force grow
+    nonlinearly with displacement. A nonlinear spring whose period depends on amplitude
+    — so orbits precess into rosettes.
+  </p>
+
+  <div class="modes">
+    <div class="mode-card">
+      <div class="mode-label" style="color:var(--accent)">Derivative tower</div>
+      <div class="mode-math">\[ \frac{d^n x}{dt^n} = -k\,x \]</div>
+      <div class="mode-desc">n = order of the derivative tied to displacement. n = 2 is the only stable case.</div>
+    </div>
+    <div class="mode-card">
+      <div class="mode-label" style="color:var(--green)">Power law spring</div>
+      <div class="mode-math">\[ F = -k\,x\left|\frac{x}{R}\right|^{n-1} \]</div>
+      <div class="mode-desc">Second-order, nonlinear. n = 1 is normal SHM; n &gt; 1 gives amplitude-dependent precession.</div>
+    </div>
+  </div>
+
+  <div class="props">
+    <div class="props-label">things to notice</div>
+    <ul class="prop-list">
+      <li><b>n = 2 is the unique stable case</b> in the derivative tower. The eigenvalues of \(r^n = -k\) land on the imaginary axis only when n = 2; every other order has at least one root with positive real part.</li>
+      <li><b>Drag velocity sets the initial kick.</b> A slow release gives radial SHM. A fast flick at an angle launches an orbit. The arrow shown during drag is the velocity vector.</li>
+      <li><b>Power law n = 1</b> is physically identical to derivative n = 2 — same ODE, same eigenvalues, same orbits. The interesting regime starts at n = 2 where orbits begin to precess.</li>
+      <li><b>The sidebar diagram updates live</b> — eigenvalue positions or potential well shape — as you change n or k.</li>
+      <li>For n ≥ 3 in the derivative tower, bodies escape in finite time. Any eigenvalue with \(\operatorname{Re}(\lambda) > 0\) causes exponential growth regardless of initial conditions.</li>
+    </ul>
+  </div>
+
+  <div class="launch-wrap">
+    <a href="index.html" class="launch">open demo →</a>
+  </div>
+
+  <footer>
+    ~350 lines of vanilla JS &nbsp;·&nbsp; RK4 integration &nbsp;·&nbsp; no libraries<br>
+    <a href="https://github.com/d-j-king/order-the-orbit" target="_blank">github.com/d-j-king/order-the-orbit</a>
+  </footer>
+
+</div>
+
+<script>
+// Animated preview: power-law n=3 rosette
+(function () {
+  const cv = document.getElementById('preview');
+  const cx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  const CX = W / 2, CY = H / 2;
+  const k = 3, n = 3, R = 100;
+
+  let sx = new Float64Array([72, 0]);
+  let sy = new Float64Array([0, Math.sqrt(k) * 72 * 0.72]);
+
+  const trail = [];
+  const TRAIL_MAX = 500;
+  const col = 'hsl(200,85%,65%)';
+
+  function derivPow(s) {
+    const ax = Math.abs(s[0]);
+    return [s[1], ax < 1e-10 ? 0 : -k * s[0] * Math.pow(ax / R, n - 1)];
+  }
+
+  function rk4step(s, dt) {
+    function add2(a, b, sc) { return [a[0] + b[0]*sc, a[1] + b[1]*sc]; }
+    const k1 = derivPow(s);
+    const k2 = derivPow(add2(s, k1, dt/2));
+    const k3 = derivPow(add2(s, k2, dt/2));
+    const k4 = derivPow(add2(s, k3, dt));
+    return new Float64Array([
+      s[0] + dt/6*(k1[0]+2*k2[0]+2*k3[0]+k4[0]),
+      s[1] + dt/6*(k1[1]+2*k2[1]+2*k3[1]+k4[1]),
+    ]);
+  }
+
+  let lastT = null, totalT = 0;
+
+  function frame(t) {
+    const rawDt = lastT ? (t - lastT)/1000 : 1/60;
+    lastT = t;
+    const dt = Math.min(rawDt, 1/30);
+    totalT += dt;
+
+    for (let i = 0; i < 4; i++) {
+      sx = rk4step(sx, dt/4);
+      sy = rk4step(sy, dt/4);
+    }
+
+    const px = CX + sx[0], py = CY + sy[0];
+    trail.push([px, py]);
+    if (trail.length > TRAIL_MAX) trail.shift();
+
+    if (totalT > 12) {
+      totalT = 0;
+      const r0 = 55 + Math.random()*30;
+      const a0 = Math.random()*Math.PI*2;
+      sx = new Float64Array([r0*Math.cos(a0), -Math.sqrt(k)*r0*Math.sin(a0)*0.7]);
+      sy = new Float64Array([r0*Math.sin(a0),  Math.sqrt(k)*r0*Math.cos(a0)*0.7]);
+      trail.length = 0;
+    }
+
+    cx.fillStyle = '#05050a';
+    cx.fillRect(0, 0, W, H);
+
+    // Anchor reticle
+    cx.strokeStyle = col;
+    cx.globalAlpha = 0.3;
+    cx.lineWidth = 1;
+    cx.beginPath(); cx.arc(CX, CY, 4, 0, Math.PI*2); cx.stroke();
+    cx.beginPath();
+    cx.moveTo(CX-8,CY); cx.lineTo(CX-5,CY);
+    cx.moveTo(CX+5,CY); cx.lineTo(CX+8,CY);
+    cx.moveTo(CX,CY-8); cx.lineTo(CX,CY-5);
+    cx.moveTo(CX,CY+5); cx.lineTo(CX,CY+8);
+    cx.stroke();
+    cx.globalAlpha = 1;
+
+    // Trail
+    if (trail.length > 1) {
+      const tn = trail.length;
+      cx.lineCap = 'round';
+      for (let i = 1; i < tn; i++) {
+        const t2 = i/tn;
+        cx.globalAlpha = t2*t2*0.55;
+        cx.strokeStyle = col;
+        cx.lineWidth = 0.5 + t2*2;
+        cx.beginPath();
+        cx.moveTo(trail[i-1][0], trail[i-1][1]);
+        cx.lineTo(trail[i][0],   trail[i][1]);
+        cx.stroke();
+      }
+      cx.globalAlpha = 1;
+      cx.lineCap = 'butt';
+    }
+
+    // Ball
+    cx.shadowColor = col;
+    cx.shadowBlur = 12;
+    const aura = cx.createRadialGradient(px,py,0, px,py,9);
+    aura.addColorStop(0, 'hsla(200,85%,65%,0.8)');
+    aura.addColorStop(1, 'hsla(200,85%,65%,0)');
+    cx.fillStyle = aura;
+    cx.beginPath(); cx.arc(px,py,9,0,Math.PI*2); cx.fill();
+
+    cx.shadowColor = '#fff';
+    cx.shadowBlur = 8;
+    cx.fillStyle = '#fff';
+    cx.beginPath(); cx.arc(px,py,2.5,0,Math.PI*2); cx.fill();
+    cx.shadowBlur = 0;
+
+    requestAnimationFrame(frame);
+  }
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
