@@ -15,11 +15,11 @@
 * { margin:0; padding:0; box-sizing:border-box; }
 
 :root {
-  --bg:     #05050a;
-  --bg2:    #0b0b16;
-  --border: #1e1e32;
+  --bg:     #020208;
+  --bg2:    #07070f;
+  --border: #252542;
   --text:   #aab8d8;
-  --dim:    #6868a0;
+  --dim:    #8282b8;
   --bright: #dce8f8;
   --accent: #4FC3F7;
   --green:  #66BB6A;
@@ -134,7 +134,7 @@ p b {
 
 .mode-desc {
   font-size: 12.5px;
-  color: #8898b8;
+  color: #9aaacb;
   line-height: 1.6;
 }
 
@@ -162,7 +162,7 @@ p b {
   font-size: 13.5px;
   color: var(--text);
   padding: 8px 0;
-  border-bottom: 1px solid #14142a;
+  border-bottom: 1px solid #0e0e22;
   padding-left: 14px;
   position: relative;
   line-height: 1.65;
@@ -216,9 +216,9 @@ footer {
 }
 
 footer a {
-  color: #505080;
+  color: #686898;
   text-decoration: none;
-  border-bottom: 1px solid #252535;
+  border-bottom: 1px solid #303050;
   transition: color 0.1s;
 }
 
@@ -249,14 +249,13 @@ footer a:hover { color: var(--text); }
 
   <p>
     The usual mass-on-a-spring ties <b>acceleration</b> to displacement: \(\ddot{x} = -kx\).
-    What if you use a higher derivative instead — jerk, snap, crackle?
-    The eigenvalue picture changes completely, and only one order gives stable orbits.
+    Substitute a higher derivative—jerk, snap, crackle—and the eigenvalue picture changes
+    completely; only one order gives stable orbits.
   </p>
 
   <p>
-    There's also a second mode: keep it second-order but let the restoring force grow
-    nonlinearly with displacement. A nonlinear spring whose period depends on amplitude
-    — so orbits precess into rosettes.
+    A second mode: keep it second-order but let the restoring force grow nonlinearly with
+    displacement. The period then depends on amplitude, and orbits precess into rosettes.
   </p>
 
   <div class="modes">
@@ -277,8 +276,8 @@ footer a:hover { color: var(--text); }
     <ul class="prop-list">
       <li><b>n = 2 is the unique stable case</b> in the derivative tower. The eigenvalues of \(r^n = -k\) land on the imaginary axis only when n = 2; every other order has at least one root with positive real part.</li>
       <li><b>Drag velocity sets the initial kick.</b> A slow release gives radial SHM. A fast flick at an angle launches an orbit. The arrow shown during drag is the velocity vector.</li>
-      <li><b>Power law n = 1</b> is physically identical to derivative n = 2 — same ODE, same eigenvalues, same orbits. The interesting regime starts at n = 2 where orbits begin to precess.</li>
-      <li><b>The sidebar diagram updates live</b> — eigenvalue positions or potential well shape — as you change n or k.</li>
+      <li><b>Power law n = 1</b> is physically identical to derivative n = 2—same ODE, same eigenvalues, same orbits. The interesting regime starts at n = 2 where orbits begin to precess.</li>
+      <li><b>The sidebar diagram updates live</b>—eigenvalue positions or potential well shape—as you change n or k.</li>
       <li>For n ≥ 3 in the derivative tower, bodies escape in finite time. Any eigenvalue with \(\operatorname{Re}(\lambda) > 0\) causes exponential growth regardless of initial conditions.</li>
     </ul>
   </div>
@@ -349,7 +348,7 @@ footer a:hover { color: var(--text); }
       trail.length = 0;
     }
 
-    cx.fillStyle = '#05050a';
+    cx.fillStyle = '#020208';
     cx.fillRect(0, 0, W, H);
 
     // Anchor reticle

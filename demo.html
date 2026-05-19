@@ -303,16 +303,16 @@ const ORDER_COLORS = ['#4FC3F7','#66BB6A','#FFA726','#EF5350','#AB47BC'];
 const POWER_REF = 100; // reference displacement (px) for power-law normalization
 
 const ORDER_INFO = [
-  { label: 'velocity ∝ −dist',     eq: '$\\dot{x} = -k\\,x$',      behavior: 'Flows directly to anchor. One real negative eigenvalue — pure exponential decay, no oscillation.' },
-  { label: 'acceleration ∝ −dist', eq: '$\\ddot{x} = -k\\,x$',     behavior: 'Simple harmonic motion. Both eigenvalues purely imaginary — the only order that gives stable orbits forever.' },
+  { label: 'velocity ∝ −dist',     eq: '$\\dot{x} = -k\\,x$',      behavior: 'Flows directly to anchor. One real negative eigenvalue—pure exponential decay, no oscillation.' },
+  { label: 'acceleration ∝ −dist', eq: '$\\ddot{x} = -k\\,x$',     behavior: 'Simple harmonic motion. Both eigenvalues purely imaginary—the only order that gives stable orbits forever.' },
   { label: 'jerk ∝ −dist',         eq: '$x^{(3)} = -k\\,x$',       behavior: 'Two of three eigenvalues have positive real part. Orbit slowly spirals out and escapes.' },
   { label: 'snap ∝ −dist',         eq: '$x^{(4)} = -k\\,x$',       behavior: 'Two stable, two unstable eigenvalues. Oscillates briefly, then growing modes take over.' },
-  { label: 'crackle ∝ −dist',      eq: '$x^{(5)} = -k\\,x$',       behavior: 'Three stable, two unstable eigenvalues. The growing modes still win — diverges.' },
+  { label: 'crackle ∝ −dist',      eq: '$x^{(5)} = -k\\,x$',       behavior: 'Three stable, two unstable eigenvalues. The growing modes still win—diverges.' },
 ];
 
 const POWER_INFO = [
-  { label: 'linear spring',    eq: '$F = -k\\,x$',                           behavior: 'Standard SHM. Identical physics to derivative n=2. Period is amplitude-independent — orbits close perfectly.' },
-  { label: 'quadratic force',  eq: '$F = -kx\\,|x/R|$',                      behavior: 'Hardening spring. Larger amplitudes oscillate faster. Elliptic orbits slowly precess — rosette patterns.' },
+  { label: 'linear spring',    eq: '$F = -k\\,x$',                           behavior: 'Standard SHM. Identical physics to derivative n=2. Period is amplitude-independent—orbits close perfectly.' },
+  { label: 'quadratic force',  eq: '$F = -kx\\,|x/R|$',                      behavior: 'Hardening spring. Larger amplitudes oscillate faster. Elliptic orbits slowly precess—rosette patterns.' },
   { label: 'cubic force',      eq: '$F = -kx\\,|x/R|^2$',                    behavior: 'Strong hardening. Precession is fast and vivid. Orbits trace clear rosettes with visible petal structure.' },
   { label: 'quartic force',    eq: '$F = -kx\\,|x/R|^3$',                    behavior: 'Very stiff at large displacement. Rapid precession. Trajectories resemble spinning polygons.' },
   { label: 'quintic force',    eq: '$F = -kx\\,|x/R|^4$',                    behavior: 'Near box-well behavior. Constant speed along path, sharp corners near max. Extreme precession.' },
